@@ -34,21 +34,22 @@ app.post("/api/stk-callback", (req, res) => {
   res.json({ message: "Callback received successfully" });
 });
 
+
 app.post("/api/agent", async (req, res) => {
   try {
     const { message } = req.body;
 
-    const response = await agent.invoke(message);
+    const response = await agent.invoke({ messages: [{ role: "user", content: message }] });
 
     res.json({
-      reply: response?.content ?? response
+      reply: response.messages?.[response.messages.length - 1]?.content ?? "No reply"
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // ---- 3. Healthcheck ----
 app.get("/", (req, res) => {
