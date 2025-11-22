@@ -2,14 +2,13 @@ import express from "express";
 import dotenv from "dotenv";
 import { stkPush } from "./mpesa.js";
 import cors from "cors";
+import { agent } from "./ai.js";
 
 dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-
 
 // ---- 1. Trigger STK push ----
 app.post("/api/stk", async (req, res) => {
@@ -35,21 +34,19 @@ app.post("/api/stk-callback", (req, res) => {
   res.json({ message: "Callback received successfully" });
 });
 
-
-
-app.post("/vision/analyze", upload.single("image"), async (req, res) => {
+app.post("/api/agent", async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: "Image required" });
+    const { message } = req.body;
 
-    const [result] = await client.labelDetection(req.file.buffer);
-q
-    const labels = result.labelAnnotations?.map(l => l.description);
-    const description =
-      labels?.join(", ") || "No clear description detected.";
+    const response = await agent.invoke(message);
 
-    res.json({ description });
+    res.json({
+      reply: response?.content ?? response
+    });
+
   } catch (err) {
-    res.status(500).json({ error: err.message || "Vision API error" });
+    console.error(err);
+    res.status(500).json({ error: err.message });
   }
 });
 
